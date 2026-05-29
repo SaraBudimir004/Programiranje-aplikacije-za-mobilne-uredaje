@@ -31,7 +31,7 @@ export default function LoginScreen() {
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            router.replace("/home");
+            router.replace("/(tabs)/home");
         } catch (err: any) {
             setError("Nevažeća e-pošta ili lozinka");
         } finally {
