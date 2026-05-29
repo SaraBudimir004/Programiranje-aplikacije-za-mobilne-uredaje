@@ -1,21 +1,38 @@
-import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
+import {
+    View,
+    Text,
+    TextInput,
+    Pressable,
+    StyleSheet,
+    ActivityIndicator,
+    useWindowDimensions,
+} from "react-native";
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, firestore } from "../../firebaseConfig";
 import { useRouter } from "expo-router";
+import ScreenBackground from "../components/ScreenBackground";
 
 export default function RegisterScreen() {
     const router = useRouter();
+    const { width } = useWindowDimensions();
+
+    const isDesktop = width >= 768;
 
     const [ime, setIme] = useState("");
     const [prezime, setPrezime] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [godine, setGodine] = useState("");
+
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleRegister = async () => {
+        setError("");
+        setLoading(true);
+
         try {
             const userCredential = await createUserWithEmailAndPassword(
                 auth,
@@ -35,73 +52,153 @@ export default function RegisterScreen() {
 
             router.replace("/login");
         } catch (err: any) {
-            setError(err.message);
+            setError("Nešto je pošlo po zlu. Provjeri podatke.");
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Create Account</Text>
+        <ScreenBackground>
+            <View style={styles.container}>
+                <View
+                    style={[
+                        styles.card,
+                        { width: isDesktop ? "45%" : "85%" },
+                    ]}
+                >
+                    <Text style={styles.title}>Registracija</Text>
 
-            <TextInput placeholder="Ime" value={ime} onChangeText={setIme} style={styles.input} />
-            <TextInput placeholder="Prezime" value={prezime} onChangeText={setPrezime} style={styles.input} />
-            <TextInput placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" style={styles.input} />
-            <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-            <TextInput placeholder="Godine" value={godine} onChangeText={setGodine} style={styles.input} />
+                    <TextInput
+                        placeholder="Ime (npr. Ana)"
+                        value={ime}
+                        onChangeText={setIme}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                    />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+                    <TextInput
+                        placeholder="Prezime (npr. Marić)"
+                        value={prezime}
+                        onChangeText={setPrezime}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                    />
 
-            <Pressable style={styles.button} onPress={handleRegister}>
-                <Text style={styles.buttonText}>Sign up</Text>
-            </Pressable>
+                    <TextInput
+                        placeholder="Email (npr. ime@gmail.com)"
+                        value={email}
+                        onChangeText={setEmail}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                        autoCapitalize="none"
+                    />
 
-            <Pressable onPress={() => router.push("/login")}>
-                <Text style={styles.link}>
-                    Already have an account? <Text style={{ fontWeight: "700" }}>Login</Text>
-                </Text>
-            </Pressable>
-        </View>
+                    <TextInput
+                        placeholder="Lozinka (npr. 123456)"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                    />
+
+                    <TextInput
+                        placeholder="Godine (npr. 20)"
+                        value={godine}
+                        onChangeText={setGodine}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                        keyboardType="numeric"
+                    />
+
+                    {error ? <Text style={styles.error}>{error}</Text> : null}
+
+                    <Pressable
+                        style={[styles.button, loading && { opacity: 0.6 }]}
+                        onPress={handleRegister}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#1f6feb" />
+                        ) : (
+                            <Text style={styles.buttonText}>
+                                Kreiraj račun
+                            </Text>
+                        )}
+                    </Pressable>
+
+                    <Pressable onPress={() => router.push("/login")}>
+                        <Text style={styles.link}>
+                            Već imaš račun?{" "}
+                            <Text style={styles.linkBold}>Prijavi se</Text>
+                        </Text>
+                    </Pressable>
+                </View>
+            </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 24,
         justifyContent: "center",
-        backgroundColor: "#0B0F1A",
+        alignItems: "center",
     },
+
+    card: {
+        backgroundColor: "rgba(255,255,255,0.92)",
+        padding: 24,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+
     title: {
-        fontSize: 34,
-        fontWeight: "800",
-        color: "#fff",
-        marginBottom: 30,
+        fontSize: 26,
+        fontWeight: "600",
+        color: "#222",
+        marginBottom: 20,
     },
+
     input: {
-        backgroundColor: "#161B2E",
+        backgroundColor: "#f2f4f7",
         padding: 14,
-        borderRadius: 12,
+        borderRadius: 10,
         marginBottom: 12,
-        color: "#fff",
+        color: "#111",
     },
+
     button: {
-        backgroundColor: "#6C5CE7",
+        backgroundColor: "#1f6feb",
         padding: 14,
-        borderRadius: 12,
+        borderRadius: 10,
+        alignItems: "center",
         marginTop: 10,
     },
+
     buttonText: {
-        color: "white",
-        textAlign: "center",
-        fontWeight: "700",
+        color: "#fff",
+        fontWeight: "600",
     },
+
     link: {
-        color: "#aaa",
+        marginTop: 16,
         textAlign: "center",
-        marginTop: 20,
+        color: "#666",
     },
+
+    linkBold: {
+        color: "#1f6feb",
+        fontWeight: "600",
+    },
+
     error: {
-        color: "#ff4d4d",
+        color: "#b00020",
         marginBottom: 10,
+        fontSize: 13,
     },
 });

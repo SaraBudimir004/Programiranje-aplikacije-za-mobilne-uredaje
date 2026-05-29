@@ -1,130 +1,157 @@
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import {
+    View,
+    Text,
+    TextInput,
+    Pressable,
+    StyleSheet,
+    ActivityIndicator,
+    useWindowDimensions,
+} from "react-native";
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 import { useRouter } from "expo-router";
+import ScreenBackground from "../components/ScreenBackground";
 
 export default function LoginScreen() {
     const router = useRouter();
+    const { width } = useWindowDimensions();
+
+    const isDesktop = width >= 768;
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
         setError("");
-        setSuccess("");
         setLoading(true);
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-
-            setSuccess(" Login successful! Welcome back!");
-
-            // mala pauza da user vidi poruku
-            setTimeout(() => {
-                router.replace("/");
-            }, 800);
-
+            router.replace("/home");
         } catch (err: any) {
-            setError(" Invalid email or password");
+            setError("Nevažeća e-pošta ili lozinka");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Welcome back</Text>
+        <ScreenBackground>
+            <View style={styles.container}>
+                <View
+                    style={[
+                        styles.card,
+                        { width: isDesktop ? "45%" : "85%" }, // responsive
+                    ]}
+                >
+                    <Text style={styles.title}>Prijava</Text>
 
-            <TextInput
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-                placeholderTextColor="#888"
-            />
+                    <TextInput
+                        placeholder="Email (npr. ime@gmail.com)"
+                        value={email}
+                        onChangeText={setEmail}
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                    />
 
-            <TextInput
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-                placeholderTextColor="#888"
-            />
+                    <TextInput
+                        placeholder="Lozinka (npr. 123456)"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        style={styles.input}
+                        placeholderTextColor="#999"
+                    />
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {success ? <Text style={styles.success}>{success}</Text> : null}
+                    {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            <Pressable
-                style={[styles.button, loading && { opacity: 0.6 }]}
-                onPress={handleLogin}
-                disabled={loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="#000" />
-                ) : (
-                    <Text style={styles.buttonText}>Login</Text>
-                )}
-            </Pressable>
+                    <Pressable
+                        style={[styles.button, loading && { opacity: 0.6 }]}
+                        onPress={handleLogin}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#1f6feb" />
+                        ) : (
+                            <Text style={styles.buttonText}>Prijavi se</Text>
+                        )}
+                    </Pressable>
 
-            <Pressable onPress={() => router.push("/register")}>
-                <Text style={styles.link}>
-                    Don’t have account? <Text style={{ fontWeight: "700" }}>Sign up</Text>
-                </Text>
-            </Pressable>
-        </View>
+                    <Pressable onPress={() => router.push("/register")}>
+                        <Text style={styles.link}>
+                            Ako nemaš račun?{" "}
+                            <Text style={styles.linkBold}>Registriraj se</Text>
+                        </Text>
+                    </Pressable>
+                </View>
+            </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 24,
         justifyContent: "center",
-        backgroundColor: "#0B0F1A",
-    },
-    title: {
-        fontSize: 34,
-        fontWeight: "800",
-        color: "#fff",
-        marginBottom: 30,
-    },
-    input: {
-        backgroundColor: "#161B2E",
-        padding: 14,
-        borderRadius: 12,
-        marginBottom: 12,
-        color: "#fff",
-    },
-    button: {
-        backgroundColor: "#00D2D3",
-        padding: 14,
-        borderRadius: 12,
-        marginTop: 10,
         alignItems: "center",
     },
+
+    card: {
+        backgroundColor: "rgba(255,255,255,0.92)",
+        padding: 24,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+
+    title: {
+        fontSize: 26,
+        fontWeight: "600",
+        color: "#222",
+        marginBottom: 20,
+    },
+
+    input: {
+        backgroundColor: "#f2f4f7",
+        padding: 14,
+        borderRadius: 10,
+        marginBottom: 12,
+        color: "#111",
+    },
+
+    button: {
+        backgroundColor: "#1f6feb",
+        padding: 14,
+        borderRadius: 10,
+        alignItems: "center",
+        marginTop: 10,
+    },
+
     buttonText: {
-        color: "#000",
-        fontWeight: "700",
+        color: "#fff",
+        fontWeight: "600",
     },
+
     link: {
-        color: "#aaa",
+        marginTop: 16,
         textAlign: "center",
-        marginTop: 20,
+        color: "#666",
     },
+
+    linkBold: {
+        color: "#1f6feb",
+        fontWeight: "600",
+    },
+
     error: {
-        color: "#ff4d4d",
+        color: "#b00020",
         marginBottom: 10,
-        fontWeight: "600",
-    },
-    success: {
-        color: "#00ff9d",
-        marginBottom: 10,
-        fontWeight: "600",
+        fontSize: 13,
     },
 });
