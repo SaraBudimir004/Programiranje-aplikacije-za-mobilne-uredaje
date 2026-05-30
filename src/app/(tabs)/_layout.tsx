@@ -16,7 +16,7 @@ export default function TabsLayout() {
                     bottom: 18,
                     height: 70,
 
-                    backgroundColor: "rgba(10, 15, 30, 0.92)",
+                    backgroundColor: "rgba(78,146,225,0.61)",
                     borderRadius: 26,
 
                     borderTopWidth: 0,
@@ -32,7 +32,7 @@ export default function TabsLayout() {
                 },
 
                 tabBarActiveTintColor: "#ffffff",
-                tabBarInactiveTintColor: "rgba(255,255,255,0.4)",
+                tabBarInactiveTintColor: "rgb(255,255,255)",
             }}
         >
             {/* HOME */}
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     },
 
     active: {
-        backgroundColor: "rgba(255,255,255,0.08)",
+        backgroundColor: "rgb(216,212,212)",
         shadowColor: "#60A5FA",
         shadowOpacity: 0.25,
         shadowRadius: 12,
