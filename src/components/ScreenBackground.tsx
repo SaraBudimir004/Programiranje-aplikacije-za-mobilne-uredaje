@@ -1,4 +1,4 @@
-import { ImageBackground, StyleSheet, Dimensions } from "react-native";
+import { ImageBackground, StyleSheet } from "react-native";
 
 export default function ScreenBackground({ children }: any) {
     return (
@@ -16,8 +16,6 @@ const styles = StyleSheet.create({
     bg: {
         flex: 1,
         width: "100%",
-        height: Dimensions.get("window").height,
-        minWidth: "100%",
-        minHeight: "100%",
+        height: "100%",
     },
 });
