@@ -1,18 +1,28 @@
-import { View, Text, Pressable, StyleSheet, ImageBackground, Image } from "react-native";
 import { useRouter } from "expo-router";
+import {
+  Dimensions,
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+
+const { width, height } = Dimensions.get("window");
+
+const isTabletOrDesktop = width > 768;
 
 export default function Home() {
   const router = useRouter();
 
   return (
       <ImageBackground
-          source={{
-            uri: "https://i.pinimg.com/1200x/f1/c4/6a/f1c46a9783ff0aa8b16e4cd8a0b1bd35.jpg",
-          }}
+          source={require("../../assets/1.jpg")}
           style={styles.background}
+          resizeMode="cover"
       >
         <View style={styles.overlay}>
-
           {/* LOGO */}
           <Image
               source={require("../../assets/money.png")}
@@ -28,7 +38,6 @@ export default function Home() {
               <Text style={styles.buttonText}>Prijava</Text>
             </Pressable>
           </View>
-
         </View>
       </ImageBackground>
   );
@@ -37,6 +46,8 @@ export default function Home() {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
+    width: "100%",
+    height: "100%",
   },
 
   overlay: {
@@ -46,22 +57,22 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.3)",
   },
 
-  // 🔥 LOGO VEĆI + DESNO
   rightImage: {
-    width: 400,
-    height: 400,
+    width: isTabletOrDesktop ? 260 : width * 0.35,
+    height: isTabletOrDesktop ? 260 : width * 0.35,
     resizeMode: "contain",
     position: "absolute",
-    right: 20,
-    top: "-3%",
+    top: isTabletOrDesktop ? "10%" : "30%",
+    right: isTabletOrDesktop ? 70 : width * 0.08,
+    opacity: 0.9,
   },
 
   buttonWrapper: {
-    width: "100%",
-    alignItems: "flex-end",
-    paddingRight: 20,
     position: "absolute",
     bottom: 40,
+    left: 0,
+    right: 0,
+    alignItems: "center",
   },
   button: {
     backgroundColor: "#fff",
