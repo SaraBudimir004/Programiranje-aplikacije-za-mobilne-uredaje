@@ -47,7 +47,7 @@ export function ImagePickerCard({ image, onPickCamera, onPickGallery, onPreviewP
                 >
                     <Ionicons name="camera" size={22} color="#fff" />
                     <Text style={styles.actionBtnText}>
-                        {Platform.OS === "web" ? "Kamera (N/A)" : "Kamera"}
+                        {Platform.OS === "web" ? "Kamera " : "Kamera"}
                     </Text>
                 </Pressable>
                 <Pressable

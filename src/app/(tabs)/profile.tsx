@@ -198,7 +198,6 @@ export default function ProfileScreen() {
                 <Text style={[styles.section, { color: colors.textSecondary }]}>RAČUN</Text>
                 <SettingRow icon="log-out-outline" label="Odjavi se" onPress={handleLogout} danger />
 
-                <Text style={[styles.version, { color: colors.textMuted }]}>SmartExpense v2.0.0</Text>
             </ScrollView>
 
             {/* EDIT NAME MODAL */}
