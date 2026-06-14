@@ -42,7 +42,7 @@ export default function TransactionsScreen() {
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
                 <View>
-                    <Text style={[styles.pageTitle, { color: colors.text }]}>Transakcije </Text>
+                    <Text style={[styles.pageTitle, { color: colors.textHeading }]}>Transakcije </Text>
                     <View style={{ height: 40 }} />
                 </View>
 

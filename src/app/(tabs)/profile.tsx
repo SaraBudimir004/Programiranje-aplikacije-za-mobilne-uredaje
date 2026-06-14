@@ -1,10 +1,11 @@
 import {
-    View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, TextInput, Modal, TouchableWithoutFeedback,
+    View, Text, StyleSheet, ScrollView, Pressable, Switch, Alert, TextInput, Modal,
+    TouchableWithoutFeedback, Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ScreenBackground from "../../components/ScreenBackground";
 import { auth, firestore } from "../../../firebaseConfig";
-import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot, collection } from "firebase/firestore";
 import { signOut, updateProfile } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
@@ -18,12 +19,14 @@ export default function ProfileScreen() {
     const [emailNotif, setEmailNotif] = useState(false);
     const [spendingLimit, setSpendingLimit] = useState<number | null>(null);
 
+    // Trenutno stanje računa (totalBudget iz Firestore)
+    const [accountBalance, setAccountBalance] = useState<number>(0);
+
     const [editModal, setEditModal] = useState(false);
-    const [budgetModal, setBudgetModal] = useState(false);
+    const [balanceModal, setBalanceModal] = useState(false); // ← NOVA: zamjena za budgetModal
     const [limitModal, setLimitModal] = useState(false);
 
     const [editName, setEditName] = useState("");
-    const [editBudget, setEditBudget] = useState("");
     const [editLimit, setEditLimit] = useState("");
 
     const [saving, setSaving] = useState(false);
@@ -31,37 +34,54 @@ export default function ProfileScreen() {
     useEffect(() => {
         const user = auth.currentUser;
         if (!user) return;
+
+        // Slušamo korisničke podatke (ime, budžet, limit, totalBudget)
         const userRef = doc(firestore, "users", user.uid);
-        const unsub = onSnapshot(userRef, (snap) => {
+        const unsubUser = onSnapshot(userRef, (snap) => {
             if (snap.exists()) {
                 const d = snap.data();
                 setUserData(d);
                 setEmailNotif(d.emailNotifications || false);
                 setSpendingLimit(d.spendingLimit || null);
                 setEditName(d.ime || "");
-                setEditBudget(String(d.monthlyBudget || ""));
                 setEditLimit(String(d.spendingLimit || ""));
+                // totalBudget je stvarno trenutno stanje računa
+                setAccountBalance(d.totalBudget ?? 0);
             }
         });
-        return () => unsub();
+
+        return () => unsubUser();
     }, []);
 
+
     const handleLogout = async () => {
-        Alert.alert("Odjava", "Jesi li siguran da se želiš odjaviti?", [
-            { text: "Odustani", style: "cancel" },
-            {
-                text: "Odjavi se", style: "destructive", onPress: async () => {
-                    try {
-                        await signOut(auth);
-                    } catch (e) {
-                        console.error("Logout error:", e);
-                    } finally {
-                        // Uvijek preusmjeri na login bez obzira na grešku
-                        router.replace("/login");
-                    }
-                }
+        const performLogout = async () => {
+            try {
+                await signOut(auth);
+            } catch (e) {
+                console.error("Logout error:", e);
+            } finally {
+                router.replace("/login");
             }
-        ]);
+        };
+
+        if (Platform.OS === "web") {
+            // Na webu Alert ne radi koristim window.confirm
+            const confirmed = window.confirm("Jesi li siguran da se želiš odjaviti?");
+            if (confirmed) {
+                await performLogout();
+            }
+        } else {
+            // Na mobilnoj verziji Alert radi noormalno
+            Alert.alert("Odjava", "Jesi li siguran da se želiš odjaviti?", [
+                { text: "Odustani", style: "cancel" },
+                {
+                    text: "Odjavi se",
+                    style: "destructive",
+                    onPress: performLogout,
+                },
+            ]);
+        }
     };
 
     const toggleEmailNotif = async (val: boolean) => {
@@ -83,21 +103,16 @@ export default function ProfileScreen() {
         setEditModal(false);
     };
 
-    const handleSaveBudget = async () => {
-        const val = Number(editBudget);
-        if (isNaN(val) || val <= 0) { Alert.alert("Greška", "Unesite ispravan iznos"); return; }
-        setSaving(true);
-        const user = auth.currentUser;
-        if (!user) return;
-        const userRef = doc(firestore, "users", user.uid);
-        await updateDoc(userRef, { monthlyBudget: val });
-        setSaving(false);
-        setBudgetModal(false);
-    };
-
     const handleSaveLimit = async () => {
         const val = Number(editLimit);
-        if (isNaN(val) || val <= 0) { Alert.alert("Greška", "Unesite ispravan iznos"); return; }
+        if (isNaN(val) || val <= 0) {
+            if (Platform.OS === "web") {
+                window.alert("Unesite ispravan iznos");
+            } else {
+                Alert.alert("Greška", "Unesite ispravan iznos");
+            }
+            return;
+        }
         setSaving(true);
         const user = auth.currentUser;
         if (!user) return;
@@ -113,6 +128,9 @@ export default function ProfileScreen() {
     const regDate = user?.metadata?.creationTime
         ? new Date(user.metadata.creationTime).toLocaleDateString("hr-HR")
         : "N/A";
+
+    // Određujemo boju stanja računa ovisno o tome je li pozitivno ili negativno
+    const balanceColor = accountBalance >= 0 ? colors.success : colors.danger;
 
     const SettingRow = ({ icon, label, value, onPress, danger, toggle, toggleVal, onToggle }: any) => (
         <Pressable
@@ -160,20 +178,23 @@ export default function ProfileScreen() {
                             <Text style={[styles.profileStatLabel, { color: colors.textMuted }]}>Registracija</Text>
                         </View>
                         <View style={[styles.profileStatDivider, { backgroundColor: colors.border }]} />
-                        <View style={styles.profileStat}>
-                            <Text style={[styles.profileStatValue, { color: colors.warning }]}>
-                                {spendingLimit ? `€${spendingLimit}` : "Nije set."}
-                            </Text>
-                            <Text style={[styles.profileStatLabel, { color: colors.textMuted }]}>Limit</Text>
-                        </View>
+
                     </View>
                 </View>
 
                 {/* ACCOUNT SETTINGS */}
                 <Text style={[styles.section, { color: colors.textSecondary }]}>KORISNIČKI RAČUN</Text>
                 <SettingRow icon="person-outline" label="Promijeni ime" value={userData?.ime} onPress={() => setEditModal(true)} />
-                <SettingRow icon="wallet-outline" label="Promijeni budžet" value={`€${userData?.monthlyBudget || 0}/mj.`} onPress={() => setBudgetModal(true)} />
-                <SettingRow icon="alert-circle-outline" label="Postavi limit potrošnje" value={spendingLimit ? `€${spendingLimit}` : "Nije postavljeno"} onPress={() => setLimitModal(true)} />
+
+                {/*← Trenutno stanje računa */ }
+                <SettingRow
+                    icon="bar-chart-outline"
+                    label="Trenutno stanje računa"
+                    value={`€${accountBalance.toFixed(2)}`}
+                    onPress={() => setBalanceModal(true)}
+                />
+
+
 
                 {/* APP SETTINGS */}
                 <Text style={[styles.section, { color: colors.textSecondary }]}>POSTAVKE APLIKACIJE</Text>
@@ -228,29 +249,57 @@ export default function ProfileScreen() {
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* BUDGET MODAL */}
-            <Modal visible={budgetModal} transparent animationType="slide">
-                <TouchableWithoutFeedback onPress={() => setBudgetModal(false)}>
+
+            <Modal visible={balanceModal} transparent animationType="fade">
+                <TouchableWithoutFeedback onPress={() => setBalanceModal(false)}>
                     <View style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}>
                         <TouchableWithoutFeedback>
-                            <View style={[styles.modal, { backgroundColor: colors.cardStrong }]}>
-                                <Text style={[styles.modalTitle, { color: colors.text }]}>Promijeni budžet</Text>
-                                <TextInput
-                                    value={editBudget}
-                                    onChangeText={setEditBudget}
-                                    style={[styles.modalInput, { backgroundColor: colors.input, color: colors.text }]}
-                                    placeholder="Iznos u €"
-                                    placeholderTextColor={colors.textMuted}
-                                    keyboardType="numeric"
-                                />
-                                <View style={styles.modalButtons}>
-                                    <Pressable style={[styles.modalBtn, { backgroundColor: colors.card }]} onPress={() => setBudgetModal(false)}>
-                                        <Text style={[styles.modalBtnText, { color: colors.textSecondary }]}>Odustani</Text>
-                                    </Pressable>
-                                    <Pressable style={[styles.modalBtn, { backgroundColor: colors.accent }]} onPress={handleSaveBudget}>
-                                        <Text style={[styles.modalBtnText, { color: "#fff" }]}>{saving ? "..." : "Spremi"}</Text>
-                                    </Pressable>
+                            <View style={[styles.modal, styles.balanceModal, { backgroundColor: colors.cardStrong }]}>
+
+                                {/* Ikona */}
+                                <View style={[styles.balanceIconWrap, { backgroundColor: colors.accentLight }]}>
+                                    <Ionicons name="wallet" size={32} color={colors.accent} />
                                 </View>
+
+                                <Text style={[styles.modalTitle, { color: colors.text, textAlign: "center" }]}>
+                                    Stanje računa
+                                </Text>
+                                <Text style={[styles.balanceSubtitle, { color: colors.textMuted }]}>
+                                    Pregled trenutnih sredstava
+                                </Text>
+
+
+                                <View style={[styles.balanceAmountBox, { backgroundColor: colors.card }]}>
+                                    <Text style={[styles.balanceAmount, { color: balanceColor }]}>
+                                        {accountBalance >= 0 ? "+" : ""}€{accountBalance.toFixed(2)}
+                                    </Text>
+                                    <Text style={[styles.balanceAmountLabel, { color: colors.textMuted }]}>
+                                        Trenutno stanje
+                                    </Text>
+                                </View>
+
+                                {/* Detalji: budžet i limit */}
+                                <View style={styles.balanceDetails}>
+                                    <View style={[styles.balanceDetailRow, { borderBottomColor: colors.border }]}>
+                                        <View style={styles.balanceDetailLeft}>
+                                            <Ionicons name="calendar-outline" size={16} color={colors.accent} />
+                                            <Text style={[styles.balanceDetailLabel, { color: colors.textSecondary }]}>
+                                                Mjesečni budžet
+                                            </Text>
+                                        </View>
+                                        <Text style={[styles.balanceDetailValue, { color: colors.text }]}>
+                                            €{(userData?.monthlyBudget || 0).toFixed(2)}
+                                        </Text>
+                                    </View>
+
+                                </View>
+
+                                <Pressable
+                                    style={[styles.balanceCloseBtn, { backgroundColor: colors.accent }]}
+                                    onPress={() => setBalanceModal(false)}
+                                >
+                                    <Text style={styles.balanceCloseBtnText}>Zatvori</Text>
+                                </Pressable>
                             </View>
                         </TouchableWithoutFeedback>
                     </View>
@@ -315,4 +364,19 @@ const styles = StyleSheet.create({
     modalButtons: { flexDirection: "row", gap: 10 },
     modalBtn: { flex: 1, padding: 14, borderRadius: 14, alignItems: "center" },
     modalBtnText: { fontWeight: "700", fontSize: 15 },
+
+
+    balanceModal: { alignItems: "center", gap: 0 },
+    balanceIconWrap: { width: 64, height: 64, borderRadius: 20, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+    balanceSubtitle: { fontSize: 13, marginTop: -10, marginBottom: 20, textAlign: "center" },
+    balanceAmountBox: { width: "100%", borderRadius: 18, padding: 20, alignItems: "center", marginBottom: 16 },
+    balanceAmount: { fontSize: 36, fontWeight: "900", letterSpacing: -1 },
+    balanceAmountLabel: { fontSize: 12, marginTop: 4 },
+    balanceDetails: { width: "100%", marginBottom: 20 },
+    balanceDetailRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1 },
+    balanceDetailLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+    balanceDetailLabel: { fontSize: 14 },
+    balanceDetailValue: { fontSize: 14, fontWeight: "700" },
+    balanceCloseBtn: { width: "100%", padding: 15, borderRadius: 16, alignItems: "center" },
+    balanceCloseBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
 });

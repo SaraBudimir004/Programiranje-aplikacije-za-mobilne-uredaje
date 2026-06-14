@@ -62,10 +62,10 @@ export default function Analytics() {
     const incomes = transactions.filter((t) => t.type === "income");
     const totalExpense = expenses.reduce((s, t) => s + Number(t.amount), 0);
     const totalIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
-    const savings = totalIncome - totalExpense;
+    const savings = (monthlyBudget + totalIncome) - totalExpense;
     const spentPct = monthlyBudget > 0 ? Math.min((totalExpense / monthlyBudget) * 100, 100) : 0;
 
-    // Category breakdown
+    // Raspodjela kategorija
     const catMap: Record<string, number> = {};
     expenses.forEach((t) => {
         const cat = t.category || "Ostalo";
@@ -73,10 +73,10 @@ export default function Analytics() {
     });
     const catEntries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
 
-    // Top 3 expenses
+    // Top 3 troska
     const top3 = [...expenses].sort((a, b) => Number(b.amount) - Number(a.amount)).slice(0, 3);
 
-    // Monthly breakdown
+    // Mjesečna analiza
     const monthMap: Record<string, MonthData> = {};
     transactions.forEach((t) => {
         const key = t.date?.seconds
@@ -92,7 +92,7 @@ export default function Analytics() {
     return (
         <ScreenBackground>
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.pageTitle, { color: colors.text }]}>Analitika 📊</Text>
+                <Text style={[styles.pageTitle, { color: colors.textHeading }]}>Analitika 📊</Text>
                 <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>Pregled tvojih financija</Text>
 
                 {/* SUMMARY CARDS */}
@@ -110,7 +110,7 @@ export default function Analytics() {
                     <View style={[styles.summaryCard, { backgroundColor: savings >= 0 ? "rgba(37,99,235,0.18)" : "rgba(239,68,68,0.18)" }]}>
                         <Ionicons name="wallet" size={22} color={savings >= 0 ? colors.accent : colors.danger} />
                         <Text style={[styles.summaryAmount, { color: savings >= 0 ? colors.accent : colors.danger }]}>€{savings.toFixed(2)}</Text>
-                        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Ušteda</Text>
+                        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Stanje računa</Text>
                     </View>
                 </View>
 
@@ -152,7 +152,7 @@ export default function Analytics() {
                 {/* OVERVIEW TAB */}
                 {activeTab === "overview" && (
                     <View>
-                        <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 12 }]}>Top 3 troška</Text>
+                        <Text style={[styles.cardTitle, { color: colors.textHeading, marginBottom: 12 }]}>Top 3 troška</Text>
                         {top3.length === 0 && <Text style={[styles.empty, { color: colors.textMuted }]}>Nema troškova</Text>}
                         {top3.map((t, i) => (
                             <View key={t.id} style={[styles.topItem, { backgroundColor: colors.card }]}>
@@ -167,7 +167,7 @@ export default function Analytics() {
                         ))}
 
                         {/* Income vs Expense visual */}
-                        <Text style={[styles.cardTitle, { color: colors.text, marginTop: 20, marginBottom: 12 }]}>Prihodi vs Rashodi</Text>
+                        <Text style={[styles.cardTitle, { color: colors.textHeading, marginTop: 20, marginBottom: 12 }]}>Prihodi vs Rashodi</Text>
                         <View style={[styles.vsCard, { backgroundColor: colors.card }]}>
                             {totalIncome + totalExpense > 0 ? (
                                 <>
