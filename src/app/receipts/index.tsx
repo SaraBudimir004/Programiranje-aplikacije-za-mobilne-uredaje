@@ -77,9 +77,9 @@ export default function ReceiptsScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backBtn}>
-                        <Ionicons name="arrow-back" size={22} color={colors.text} />
+                        <Ionicons name="arrow-back" size={22} color={colors.textHeading} />
                     </Pressable>
-                    <Text style={[styles.title, { color: colors.text }]}>Dodaj račun</Text>
+                    <Text style={[styles.title, { color: colors.textHeading }]}>Dodaj račun</Text>
                 </View>
 
                 {success && (

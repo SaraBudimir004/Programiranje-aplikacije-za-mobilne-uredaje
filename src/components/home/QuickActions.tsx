@@ -16,7 +16,7 @@ export default function QuickActions({
                                      }: QuickActionsProps) {
     return (
         <>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            <Text style={[styles.sectionTitle, { color: colors.textHeading }]}>
                 Brze radnje
             </Text>
             <View style={styles.actionsRow}>

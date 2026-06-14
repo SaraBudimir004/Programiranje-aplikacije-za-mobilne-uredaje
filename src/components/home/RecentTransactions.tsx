@@ -17,7 +17,7 @@ export default function RecentTransactions({
     return (
         <>
             <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text, marginTop: 0 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textHeading, marginTop: 0 }]}>
                     Nedavne transakcije
                 </Text>
                 <Pressable onPress={onSeeAll}>

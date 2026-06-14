@@ -17,7 +17,7 @@ export default function HomeHeader({
     return (
         <View style={styles.header}>
             <View>
-                <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
+                <Text style={[styles.name, { color: colors.textHeading }]}>{name}</Text>
             </View>
             <View style={styles.headerActions}>
                 <Pressable

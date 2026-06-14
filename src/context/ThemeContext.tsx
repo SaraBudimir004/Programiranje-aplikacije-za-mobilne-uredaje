@@ -12,9 +12,10 @@ interface ThemeContextType {
 
 export const lightColors = {
     background: "transparent",
-    card: "rgba(255,255,255,0.75)",
-    cardStrong: "rgba(255,255,255,0.92)",
+    card: "#ffffff",
+    cardStrong: "#ffffff",
     text: "#0f172a",
+    textHeading: "#0f172a", // dodano
     textSecondary: "#475569",
     textMuted: "#94a3b8",
     border: "rgba(255,255,255,0.4)",
@@ -34,9 +35,10 @@ export const lightColors = {
 
 export const darkColors = {
     background: "transparent",
-    card: "rgba(15,23,42,0.82)",
-    cardStrong: "rgba(15,23,42,0.95)",
+    card: "#2e313e",
+    cardStrong: "#2e313e",
     text: "#f1f5f9",
+    textHeading: "#0f172a", //dodano
     textSecondary: "#94a3b8",
     textMuted: "#64748b",
     border: "rgba(255,255,255,0.1)",
